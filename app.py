@@ -1,36 +1,46 @@
-from engine.walk import list_files
-from textual.app import App, ComposeResult
+from textual.app import App, ComposeResult, on
 from textual.widgets import Header, Footer, DirectoryTree, Log
 from textual.containers import Horizontal
 
 
 class AudiTUI(App):
-    BINDINGS = [("d", "toggle_dark", "Toggle dark mode")]
+    CSS = """
+    #tree.hidden {
+        display: none;
+    }
+    """
+
+    BINDINGS = [
+        ("d", "toggle_dark", "Toggle Dark Mode"),
+        ("e", "toggle_tree", "Toggle Directory Tree"),
+    ]
 
     def compose(self) -> ComposeResult:
-        with Horizontal():
-            yield DirectoryTree("testdir")
-            yield Log()
-
         yield Header()
+
+        with Horizontal():
+            yield DirectoryTree("testdir", id="tree")
+            yield Log(id="log")
+
         yield Footer()
 
+    @on(DirectoryTree.FileSelected)
+    def file_selected(self, event: DirectoryTree.FileSelected) -> None:
+        log = self.query_one("#log", Log)
+        log.clear()
 
-    def on_ready(self) -> None:
-        with open("testdir/subdir/file3.txt", "r") as f:
-            lines = f.readlines()            
-
-        log = self.query_one(Log)
-        log.write_lines(lines)
-
+        try:
+            log.write(event.path.read_text())
+        except Exception as e:
+            log.write(f"Error reading file: {e}")
 
     def action_toggle_dark(self) -> None:
-        """An action to toggle dark mode"""
-        self.theme = (
-            "textual-dark" if self.theme == "textual-light" else "textual-light"
-        )
+        self.theme = "textual-dark" if self.theme == "textual-light" else "textual-light"
+
+    def action_toggle_tree(self) -> None:
+        tree = self.query_one("#tree", DirectoryTree)
+        tree.toggle_class("hidden")
 
 
 if __name__ == "__main__":
-    app = AudiTUI()
-    app.run()
+    AudiTUI().run()
