@@ -8,6 +8,11 @@ class AudiTUI(App):
     #tree.hidden {
         display: none;
     }
+
+    #tree {
+        width: 30;
+        max-width: 40;
+    }
     """
 
     BINDINGS = [
