@@ -1,0 +1,4 @@
+testdir/
+.venv/
+__pycache__/
+outline.txt
