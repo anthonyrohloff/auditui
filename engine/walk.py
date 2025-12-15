@@ -2,6 +2,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 import math
 
+
 # Helper function to get file sizes in a readable format
 # https://stackoverflow.com/questions/5194057/better-way-to-convert-file-sizes-in-python
 def _convert_size(size_bytes):
@@ -12,6 +13,7 @@ def _convert_size(size_bytes):
    p = math.pow(1024, i)
    s = round(size_bytes / p, 2)
    return "%s %s" % (s, size_name[i])
+
 
 # Return file tree with last modified time and attributes
 def list_files(startpath, level=0):
