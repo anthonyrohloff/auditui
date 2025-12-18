@@ -13,9 +13,17 @@ class FilteredDirectoryTree(DirectoryTree):
         for path in paths:
             if path.is_dir():
                 yield path
-            elif self.allowed_extensions is None:
-                yield path
-            elif path.suffix.lower() in self.allowed_extensions:
+                continue
+
+            if self.allowed_extensions is not None and path.suffix.lower() not in self.allowed_extensions:
+                continue
+
+            try:
+                text = path.read_text(errors="ignore")
+            except Exception:
+                continue
+
+            if "file 2" in text:
                 yield path
 
 class AudiTUI(App):
