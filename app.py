@@ -1,5 +1,5 @@
 from textual.app import App, ComposeResult, on
-from textual.widgets import Header, Footer, DirectoryTree, Log
+from textual.widgets import Header, Footer, DirectoryTree, RichLog
 from textual.containers import Horizontal, Vertical
 from typing import Iterable
 from pathlib import Path
@@ -10,13 +10,18 @@ from detect.ssn import find_ssns
 
 
 class FilteredDirectoryTree(DirectoryTree):
-    def __init__(self, *args, allowed_extensions: set[str] | None = None, **kwargs):
+    def __init__(self, *args, allowed_extensions, **kwargs):
         super().__init__(*args, **kwargs)
         self.allowed_extensions = ({ext.lower() for ext in allowed_extensions} if allowed_extensions is not None else None)
         self.ssns = {}
         self.match_id = 0
+        self.file_dict = {}
 
+    # Iterable[Path] means that paths must be an iterable (list, tuple, set, etc...) of type Path (from pathlib)
+    # -> Iterable[Path] means that the function should return an Iterable containing Path objects
+    # Both are optional hints for readability
     def filter_paths(self, paths: Iterable[Path]) -> Iterable[Path]:
+        count = 0
         for path in paths:
             # Return all dirs
             # TODO: Stop returning dir if no files/subdirs have violations
@@ -41,6 +46,7 @@ class FilteredDirectoryTree(DirectoryTree):
                 yield path
 
 
+
 class AudiTUI(App):
     CSS = """
     #tree.hidden {
@@ -54,8 +60,12 @@ class AudiTUI(App):
     """
 
     BINDINGS = [
-        ("d", "toggle_dark", "Toggle Dark Mode"),
+        ("w", "next_file", "Next File"),
+        ("s", "previous_file", "Previous File"),
+        ("a", "mark_violation", "Mark Violation"),
+        ("d", "mark_acceptable", "Mark Accepatble"),
         ("e", "toggle_tree", "Toggle Directory Tree"),
+        ("q", "open_file", "Open File")
     ]
 
     def compose(self) -> ComposeResult:
@@ -63,18 +73,16 @@ class AudiTUI(App):
 
         with Horizontal():
             yield FilteredDirectoryTree("testdir", id="tree", allowed_extensions={".txt"})
-            with Vertical():
-                yield Log(id="log")
-                yield Log(id="match_info_log")
-            
+            yield RichLog(id="log", wrap=True)
+            yield RichLog(id="match_info_log", wrap=True)
 
         yield Footer()
 
     @on(FilteredDirectoryTree.FileSelected)
     def file_selected(self, event: FilteredDirectoryTree.FileSelected) -> None:
-        log = self.query_one("#log", Log)
+        log = self.query_one("#log", RichLog)
         log.clear()
-        match_info_log = self.query_one("#match_info_log", Log)
+        match_info_log = self.query_one("#match_info_log", RichLog)
         match_info_log.clear()
         
         tree = self.query_one("#tree", FilteredDirectoryTree)
@@ -90,9 +98,6 @@ class AudiTUI(App):
         except Exception as e:
             log.write(f"Error reading file: {e}")
             match_info_log.write(f"Error getting match information: {e}")
-
-    def action_toggle_dark(self) -> None:
-        self.theme = "textual-dark" if self.theme == "textual-light" else "textual-light"
 
     def action_toggle_tree(self) -> None:
         tree = self.query_one("#tree", FilteredDirectoryTree)

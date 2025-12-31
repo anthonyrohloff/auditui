@@ -29,7 +29,7 @@ def find_ssns(text, id, path):
         return {}, id
 
     text_lower = text.lower()
-    # todo: make all the keywords lowercase already to save time
+    # TODO:: make all the keywords lowercase already to save time
     keywords_lower = [k.lower() for k in keywords]
     processed_matches = {}
 
